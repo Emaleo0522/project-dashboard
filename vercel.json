@@ -1,0 +1,11 @@
+{
+  "functions": {
+    "app/**/*.{js,ts}": {
+      "maxDuration": 60
+    }
+  },
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://dpdwrtgsmdzsdzmpitfz.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwZHdydGdzbWR6c2R6bXBpdGZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyMzg3ODgsImV4cCI6MjA3NDgxNDc4OH0.mPI-K5n7VHv5EgQRiCdYfZdE1sowsMpZF4PhhEhdGHs"
+  }
+}
