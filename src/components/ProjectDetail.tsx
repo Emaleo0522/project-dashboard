@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Project } from '@/types/project'
 import { getSupabase } from '@/lib/supabase'
@@ -17,7 +17,7 @@ interface ProjectDetailProps {
 }
 
 export default function ProjectDetail({ projectId }: ProjectDetailProps) {
-  const { user, signOut } = useAuth()
+  const { signOut } = useAuth()
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -27,11 +27,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
   const [quickEditMode, setQuickEditMode] = useState(false)
   const router = useRouter()
 
-  useEffect(() => {
-    fetchProject()
-  }, [projectId])
-
-  const fetchProject = async () => {
+  const fetchProject = useCallback(async () => {
     try {
       const supabase = getSupabase()
       const { data, error } = await supabase
@@ -48,7 +44,11 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [projectId, router])
+
+  useEffect(() => {
+    fetchProject()
+  }, [fetchProject])
 
   const updateLastGitUpdate = async (location: 'oficina' | 'casa') => {
     if (!project) return

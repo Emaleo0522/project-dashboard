@@ -44,8 +44,8 @@ export default function LoginForm() {
         if (error) throw error
         setError('¡Cuenta creada! Revisa tu email para confirmar tu cuenta.')
       }
-    } catch (error: any) {
-      setError(error.message || 'Ha ocurrido un error')
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'Ha ocurrido un error')
     } finally {
       setLoading(false)
     }

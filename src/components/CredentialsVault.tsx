@@ -44,7 +44,7 @@ interface NewCredential {
 }
 
 export default function CredentialsVault({ projectId, onUpdate }: CredentialsVaultProps) {
-  const { user } = useAuth()
+  const { } = useAuth()
   const [isUnlocked, setIsUnlocked] = useState(false)
   const [masterPassword, setMasterPassword] = useState('')
   const [credentials, setCredentials] = useState<DecryptedCredential[]>([])

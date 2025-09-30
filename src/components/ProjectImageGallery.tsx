@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { getSupabase } from '@/lib/supabase'
 import { Image as ImageIcon, X, ExternalLink, Trash2 } from 'lucide-react'
 import Image from 'next/image'
@@ -24,11 +24,7 @@ export default function ProjectImageGallery({ projectId, type, title }: ProjectI
   const [loading, setLoading] = useState(true)
   const [selectedImage, setSelectedImage] = useState<ProjectImage | null>(null)
 
-  useEffect(() => {
-    fetchImages()
-  }, [projectId, type])
-
-  const fetchImages = async () => {
+  const fetchImages = useCallback(async () => {
     try {
       const supabase = getSupabase()
       const { data, error } = await supabase
@@ -45,7 +41,11 @@ export default function ProjectImageGallery({ projectId, type, title }: ProjectI
     } finally {
       setLoading(false)
     }
-  }
+  }, [projectId, type])
+
+  useEffect(() => {
+    fetchImages()
+  }, [fetchImages])
 
   const deleteImage = async (imageId: string, imageUrl: string) => {
     if (!confirm('¿Estás seguro de que quieres eliminar esta imagen?')) return
