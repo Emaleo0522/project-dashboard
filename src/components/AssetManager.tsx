@@ -18,6 +18,7 @@ export default function AssetManager({ projectId, currentLogo, onLogoUpdate, onU
   const [uploading, setUploading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [quickActionLoading, setQuickActionLoading] = useState<string | null>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const uploadFile = async (file: File, type: 'logo' | 'screenshot' | 'background') => {
     try {
@@ -62,6 +63,7 @@ export default function AssetManager({ projectId, currentLogo, onLogoUpdate, onU
       }
 
       onUpdate()
+      setRefreshKey(prev => prev + 1) // Forzar refresh de las galerías
       return imageUrl
     } catch (error) {
       console.error('Error uploading file:', error)
@@ -226,6 +228,7 @@ export default function AssetManager({ projectId, currentLogo, onLogoUpdate, onU
           description="Puedes seleccionar múltiples archivos"
         />
         <ProjectImageGallery
+          key={`screenshot-${refreshKey}`}
           projectId={projectId}
           type="screenshot"
           title="Capturas Subidas"
@@ -241,6 +244,7 @@ export default function AssetManager({ projectId, currentLogo, onLogoUpdate, onU
           description="Imágenes de fondo, banners, etc."
         />
         <ProjectImageGallery
+          key={`background-${refreshKey}`}
           projectId={projectId}
           type="background"
           title="Fondos Subidos"

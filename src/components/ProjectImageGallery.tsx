@@ -13,6 +13,13 @@ interface ProjectImage {
   created_at: string
 }
 
+interface ImageState {
+  [key: string]: {
+    loading: boolean
+    error: boolean
+  }
+}
+
 interface ProjectImageGalleryProps {
   projectId: string
   type: 'screenshot' | 'background'
@@ -23,6 +30,7 @@ export default function ProjectImageGallery({ projectId, type, title }: ProjectI
   const [images, setImages] = useState<ProjectImage[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedImage, setSelectedImage] = useState<ProjectImage | null>(null)
+  const [imageStates, setImageStates] = useState<ImageState>({})
 
   const fetchImages = useCallback(async () => {
     try {
@@ -46,6 +54,27 @@ export default function ProjectImageGallery({ projectId, type, title }: ProjectI
   useEffect(() => {
     fetchImages()
   }, [fetchImages])
+
+  const handleImageLoad = (imageId: string) => {
+    setImageStates(prev => ({
+      ...prev,
+      [imageId]: { loading: false, error: false }
+    }))
+  }
+
+  const handleImageError = (imageId: string) => {
+    setImageStates(prev => ({
+      ...prev,
+      [imageId]: { loading: false, error: true }
+    }))
+  }
+
+  const initializeImageState = (imageId: string) => {
+    setImageStates(prev => ({
+      ...prev,
+      [imageId]: { loading: true, error: false }
+    }))
+  }
 
   const deleteImage = async (imageId: string, imageUrl: string) => {
     if (!confirm('¿Estás seguro de que quieres eliminar esta imagen?')) return
@@ -107,20 +136,47 @@ export default function ProjectImageGallery({ projectId, type, title }: ProjectI
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {images.map((image) => (
-            <div
-              key={image.id}
-              className="group relative bg-muted rounded-lg overflow-hidden aspect-video cursor-pointer border border-border hover:border-primary/50 transition-all duration-200"
-              onClick={() => setSelectedImage(image)}
-            >
-              <Image
-                src={image.image_url}
-                alt={image.description || `${type} del proyecto`}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-200"
-                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200" />
+          {images.map((image) => {
+            const imgState = imageStates[image.id] || { loading: true, error: false }
+
+            return (
+              <div
+                key={image.id}
+                className="group relative bg-muted rounded-lg overflow-hidden aspect-video cursor-pointer border border-border hover:border-primary/50 transition-all duration-200"
+                onClick={() => setSelectedImage(image)}
+              >
+                {/* Loading state */}
+                {imgState.loading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                  </div>
+                )}
+
+                {/* Error state */}
+                {imgState.error && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-muted text-muted-foreground">
+                    <div className="text-center">
+                      <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-xs">Error al cargar</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Image */}
+                <Image
+                  src={image.image_url}
+                  alt={image.description || `${type} del proyecto`}
+                  fill
+                  className={`object-cover group-hover:scale-105 transition-transform duration-200 ${
+                    imgState.loading || imgState.error ? 'opacity-0' : 'opacity-100'
+                  }`}
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  onLoadStart={() => initializeImageState(image.id)}
+                  onLoad={() => handleImageLoad(image.id)}
+                  onError={() => handleImageError(image.id)}
+                />
+
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200" />
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <button
                   onClick={(e) => {
@@ -138,7 +194,8 @@ export default function ProjectImageGallery({ projectId, type, title }: ProjectI
                 </p>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
