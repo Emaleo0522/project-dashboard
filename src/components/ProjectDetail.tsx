@@ -14,9 +14,11 @@ import { useAuth } from './AuthProvider'
 
 interface ProjectDetailProps {
   projectId: string
+  hideNavigation?: boolean
+  onUpdate?: () => void
 }
 
-export default function ProjectDetail({ projectId }: ProjectDetailProps) {
+export default function ProjectDetail({ projectId, hideNavigation = false, onUpdate }: ProjectDetailProps) {
   const { signOut } = useAuth()
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
@@ -65,6 +67,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
 
       if (error) throw error
       fetchProject()
+      onUpdate?.()
     } catch (error) {
       console.error('Error updating git timestamp:', error)
       alert('Error al actualizar la fecha')
@@ -132,12 +135,14 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push('/')}
-              className="p-2 rounded-lg bg-secondary hover:bg-accent transition-colors duration-200 border border-border"
-            >
-              <ArrowLeft className="w-5 h-5 text-foreground" />
-            </button>
+            {!hideNavigation && (
+              <button
+                onClick={() => router.push('/')}
+                className="p-2 rounded-lg bg-secondary hover:bg-accent transition-colors duration-200 border border-border"
+              >
+                <ArrowLeft className="w-5 h-5 text-foreground" />
+              </button>
+            )}
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{project.name}</h1>
               <div className="flex flex-wrap gap-2 mt-2">
@@ -187,14 +192,16 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
                 <Shield className="w-4 h-4" />
               </button>
             </div>
-            <ThemeToggle />
-            <button
-              onClick={handleSignOut}
-              className="flex items-center gap-2 px-3 py-2 text-sm bg-card border border-border rounded-lg hover:bg-muted transition-colors text-foreground"
-            >
-              <LogOut className="w-4 h-4" />
-              Cerrar sesión
-            </button>
+            {!hideNavigation && <ThemeToggle />}
+            {!hideNavigation && (
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-2 px-3 py-2 text-sm bg-card border border-border rounded-lg hover:bg-muted transition-colors text-foreground"
+              >
+                <LogOut className="w-4 h-4" />
+                Cerrar sesión
+              </button>
+            )}
           </div>
         </div>
 

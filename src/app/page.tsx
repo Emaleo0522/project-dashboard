@@ -1,6 +1,6 @@
 'use client'
 
-import Dashboard from '@/components/Dashboard'
+import AppLayout from '@/components/AppLayout'
 import LoginForm from '@/components/LoginForm'
 import { useAuth } from '@/components/AuthProvider'
 
@@ -15,5 +15,5 @@ export default function Home() {
     )
   }
 
-  return user ? <Dashboard /> : <LoginForm />
+  return user ? <AppLayout initialSection="dashboard" /> : <LoginForm />
 }

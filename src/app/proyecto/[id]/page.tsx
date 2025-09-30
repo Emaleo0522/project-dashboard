@@ -1,4 +1,4 @@
-import ProjectDetail from '@/components/ProjectDetail'
+import AppLayout from '@/components/AppLayout'
 
 interface PageProps {
   params: Promise<{
@@ -9,5 +9,5 @@ interface PageProps {
 export default async function ProjectPage({ params }: PageProps) {
   const { id } = await params
 
-  return <ProjectDetail projectId={id} />
+  return <AppLayout initialSection="details" projectId={id} />
 }

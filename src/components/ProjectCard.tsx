@@ -11,9 +11,10 @@ import EditProjectModal from './EditProjectModal'
 interface ProjectCardProps {
   project: Project
   onUpdate: () => void
+  onSelect?: (project: Project) => void
 }
 
-export default function ProjectCard({ project, onUpdate }: ProjectCardProps) {
+export default function ProjectCard({ project, onUpdate, onSelect }: ProjectCardProps) {
   const [showEditModal, setShowEditModal] = useState(false)
   const router = useRouter()
 
@@ -101,7 +102,11 @@ export default function ProjectCard({ project, onUpdate }: ProjectCardProps) {
           <button
             onClick={(e) => {
               e.stopPropagation()
-              router.push(`/proyecto/${project.id}`)
+              if (onSelect) {
+                onSelect(project)
+              } else {
+                router.push(`/proyecto/${project.id}`)
+              }
             }}
             className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-3 bg-primary text-primary-foreground rounded-full shadow-lg hover:scale-110 transform transition-transform"
           >

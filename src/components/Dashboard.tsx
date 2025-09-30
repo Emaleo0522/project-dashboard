@@ -9,7 +9,12 @@ import { Plus, Search, LogOut } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 import { useAuth } from './AuthProvider'
 
-export default function Dashboard() {
+interface DashboardProps {
+  onProjectSelect?: (project: Project) => void
+  hideHeader?: boolean
+}
+
+export default function Dashboard({ onProjectSelect, hideHeader = false }: DashboardProps) {
   const { user, signOut } = useAuth()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
@@ -52,27 +57,29 @@ export default function Dashboard() {
   })
 
   return (
-    <div className="min-h-screen bg-background transition-colors duration-300">
-      <div className="container mx-auto px-4 py-8">
+    <div className={hideHeader ? "" : "min-h-screen bg-background transition-colors duration-300"}>
+      <div className={hideHeader ? "" : "container mx-auto px-4 py-8"}>
         {/* Header */}
-        <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-          <div className="flex-1">
-            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">Panel de Desarrollo</h1>
-            <p className="text-muted-foreground text-sm sm:text-base">
-              Bienvenido, {user?.user_metadata?.full_name || user?.email}
-            </p>
+        {!hideHeader && (
+          <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+            <div className="flex-1">
+              <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">Panel de Desarrollo</h1>
+              <p className="text-muted-foreground text-sm sm:text-base">
+                Bienvenido, {user?.user_metadata?.full_name || user?.email}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-2 px-3 py-2 text-sm bg-card border border-border rounded-lg hover:bg-muted transition-colors text-foreground"
+              >
+                <LogOut className="w-4 h-4" />
+                Cerrar sesión
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <button
-              onClick={handleSignOut}
-              className="flex items-center gap-2 px-3 py-2 text-sm bg-card border border-border rounded-lg hover:bg-muted transition-colors text-foreground"
-            >
-              <LogOut className="w-4 h-4" />
-              Cerrar sesión
-            </button>
-          </div>
-        </div>
+        )}
 
         {/* Controls */}
         <div className="flex flex-col sm:flex-row gap-4 mb-8">
@@ -160,6 +167,7 @@ export default function Dashboard() {
                 <ProjectCard
                   project={project}
                   onUpdate={fetchProjects}
+                  onSelect={onProjectSelect}
                 />
               </div>
             ))}
