@@ -5,10 +5,12 @@ import { Project } from '@/types/project'
 import { getSupabase } from '@/lib/supabase'
 import ProjectCard from './ProjectCard'
 import AddProjectModal from './AddProjectModal'
-import { Plus, Search } from 'lucide-react'
+import { Plus, Search, LogOut } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
+import { useAuth } from './AuthProvider'
 
 export default function Dashboard() {
+  const { user, signOut } = useAuth()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
@@ -36,6 +38,10 @@ export default function Dashboard() {
     }
   }
 
+  const handleSignOut = async () => {
+    await signOut()
+  }
+
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          project.description?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -52,10 +58,19 @@ export default function Dashboard() {
         <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div className="flex-1">
             <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">Panel de Desarrollo</h1>
-            <p className="text-muted-foreground text-sm sm:text-base">Gestiona todos tus proyectos web y aplicaciones en un solo lugar</p>
+            <p className="text-muted-foreground text-sm sm:text-base">
+              Bienvenido, {user?.user_metadata?.full_name || user?.email}
+            </p>
           </div>
-          <div className="sm:mt-0">
+          <div className="flex items-center gap-2">
             <ThemeToggle />
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-2 px-3 py-2 text-sm bg-card border border-border rounded-lg hover:bg-muted transition-colors text-foreground"
+            >
+              <LogOut className="w-4 h-4" />
+              Cerrar sesión
+            </button>
           </div>
         </div>
 

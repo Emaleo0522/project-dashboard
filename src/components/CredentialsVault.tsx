@@ -29,6 +29,7 @@ import {
   type DecryptedCredential,
   type CredentialType
 } from '@/lib/crypto'
+import { useAuth } from './AuthProvider'
 
 interface CredentialsVaultProps {
   projectId: string
@@ -43,6 +44,7 @@ interface NewCredential {
 }
 
 export default function CredentialsVault({ projectId, onUpdate }: CredentialsVaultProps) {
+  const { user } = useAuth()
   const [isUnlocked, setIsUnlocked] = useState(false)
   const [masterPassword, setMasterPassword] = useState('')
   const [credentials, setCredentials] = useState<DecryptedCredential[]>([])
@@ -51,6 +53,7 @@ export default function CredentialsVault({ projectId, onUpdate }: CredentialsVau
   const [showAddForm, setShowAddForm] = useState(false)
   const [revealedCredentials, setRevealedCredentials] = useState<Set<string>>(new Set())
   const [masterPasswordHash, setMasterPasswordHash] = useState('')
+  const [hasUserVault, setHasUserVault] = useState(false)
 
   const [newCredential, setNewCredential] = useState<NewCredential>({
     type: CREDENTIAL_TYPES.API_KEY,
@@ -70,12 +73,76 @@ export default function CredentialsVault({ projectId, onUpdate }: CredentialsVau
       const { data, error } = await supabase
         .from('vault_master_password')
         .select('password_hash')
-        .single()
 
-      if (error) throw error
-      setMasterPasswordHash(data.password_hash)
+      if (error) {
+        // Usuario no tiene vault configurado
+        if (error.code === 'PGRST116') {
+          setHasUserVault(false)
+          return
+        }
+        throw error
+      }
+
+      if (data && data.length > 0) {
+        setMasterPasswordHash(data[0].password_hash)
+        setHasUserVault(true)
+      } else {
+        setHasUserVault(false)
+      }
     } catch (error) {
       console.error('Error fetching master password hash:', error)
+      setHasUserVault(false)
+    }
+  }
+
+  const createUserVault = async (password: string) => {
+    try {
+      const supabase = getSupabase()
+      const bcrypt = await import('bcryptjs')
+
+      const saltRounds = 12
+      const salt = await bcrypt.genSalt(saltRounds)
+      const passwordHash = await bcrypt.hash(password, salt)
+
+      const { error } = await supabase
+        .from('vault_master_password')
+        .insert([{
+          password_hash: passwordHash,
+          salt: salt
+        }])
+
+      if (error) throw error
+
+      setMasterPasswordHash(passwordHash)
+      setHasUserVault(true)
+      return true
+    } catch (error) {
+      console.error('Error creating user vault:', error)
+      return false
+    }
+  }
+
+  const handleCreateVault = async () => {
+    if (!masterPassword.trim() || masterPassword.length < 6) {
+      alert('La contraseña debe tener al menos 6 caracteres')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const success = await createUserVault(masterPassword)
+      if (success) {
+        setIsUnlocked(true)
+        setCredentials([])
+        alert('Vault creado exitosamente')
+      } else {
+        alert('Error al crear el vault')
+      }
+    } catch (error) {
+      console.error('Error creating vault:', error)
+      alert('Error al crear el vault')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -249,7 +316,9 @@ export default function CredentialsVault({ projectId, onUpdate }: CredentialsVau
       <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
         <div className="flex items-center gap-3 mb-4">
           <Lock className="w-5 h-5 text-muted-foreground" />
-          <h3 className="text-lg font-semibold text-foreground">Vault de Credenciales</h3>
+          <h3 className="text-lg font-semibold text-foreground">
+            {hasUserVault ? 'Vault de Credenciales' : 'Crear Vault Personal'}
+          </h3>
         </div>
 
         <div className="space-y-4">
@@ -261,8 +330,10 @@ export default function CredentialsVault({ projectId, onUpdate }: CredentialsVau
               </span>
             </div>
             <p className="text-xs text-yellow-700 dark:text-yellow-300">
-              Esta sección contiene credenciales sensibles como tokens de API, claves privadas y accesos a repositorios.
-              Se requiere contraseña maestra para acceder.
+              {hasUserVault
+                ? "Esta sección contiene credenciales sensibles como tokens de API, claves privadas y accesos a repositorios. Se requiere contraseña maestra para acceder."
+                : "Crea tu vault personal para almacenar credenciales de forma segura. Define una contraseña maestra que solo tú conozcas."
+              }
             </p>
           </div>
 
@@ -275,9 +346,9 @@ export default function CredentialsVault({ projectId, onUpdate }: CredentialsVau
                 type={showPassword ? 'text' : 'password'}
                 value={masterPassword}
                 onChange={(e) => setMasterPassword(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
+                onKeyDown={(e) => e.key === 'Enter' && (hasUserVault ? handleUnlock() : handleCreateVault())}
                 className="w-full px-3 py-2 bg-input border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground pr-10"
-                placeholder="Ingresa la contraseña maestra"
+                placeholder={hasUserVault ? "Ingresa la contraseña maestra" : "Define tu contraseña maestra (min 6 caracteres)"}
                 disabled={loading}
               />
               <button
@@ -289,8 +360,8 @@ export default function CredentialsVault({ projectId, onUpdate }: CredentialsVau
               </button>
             </div>
             <button
-              onClick={handleUnlock}
-              disabled={loading || !masterPassword.trim()}
+              onClick={hasUserVault ? handleUnlock : handleCreateVault}
+              disabled={loading || !masterPassword.trim() || (!hasUserVault && masterPassword.length < 6)}
               className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             >
               {loading ? (
@@ -298,7 +369,10 @@ export default function CredentialsVault({ projectId, onUpdate }: CredentialsVau
               ) : (
                 <Unlock className="w-4 h-4" />
               )}
-              {loading ? 'Verificando...' : 'Desbloquear Vault'}
+              {loading
+                ? (hasUserVault ? 'Verificando...' : 'Creando vault...')
+                : (hasUserVault ? 'Desbloquear Vault' : 'Crear Vault')
+              }
             </button>
           </div>
         </div>

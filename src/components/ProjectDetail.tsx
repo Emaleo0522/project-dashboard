@@ -4,18 +4,20 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Project } from '@/types/project'
 import { getSupabase } from '@/lib/supabase'
-import { ArrowLeft, ExternalLink, Github, Globe, Clock, MapPin, Edit2, Monitor, Settings, Upload, Save, X, Database, Shield } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Github, Globe, Clock, MapPin, Edit2, Monitor, Settings, Upload, Save, X, Database, Shield, LogOut } from 'lucide-react'
 import Image from 'next/image'
 import ThemeToggle from './ThemeToggle'
 import EditProjectModal from './EditProjectModal'
 import AssetManager from './AssetManager'
 import CredentialsVault from './CredentialsVault'
+import { useAuth } from './AuthProvider'
 
 interface ProjectDetailProps {
   projectId: string
 }
 
 export default function ProjectDetail({ projectId }: ProjectDetailProps) {
+  const { user, signOut } = useAuth()
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -67,6 +69,10 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
       console.error('Error updating git timestamp:', error)
       alert('Error al actualizar la fecha')
     }
+  }
+
+  const handleSignOut = async () => {
+    await signOut()
   }
 
   const handleLogoUpdate = (url: string) => {
@@ -182,6 +188,13 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
               </button>
             </div>
             <ThemeToggle />
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-2 px-3 py-2 text-sm bg-card border border-border rounded-lg hover:bg-muted transition-colors text-foreground"
+            >
+              <LogOut className="w-4 h-4" />
+              Cerrar sesión
+            </button>
           </div>
         </div>
 
